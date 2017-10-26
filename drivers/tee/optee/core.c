@@ -320,6 +320,10 @@ static const struct tee_driver_ops optee_ops = {
 	.cancel_req = optee_cancel_req,
 	.shm_register = optee_shm_register,
 	.shm_unregister = optee_shm_unregister,
+	.agent_register = optee_agent_register,
+	.agent_unregister = optee_agent_unregister,
+	.agent_recv = optee_agent_recv,
+	.agent_send = optee_agent_send,
 };
 
 static const struct tee_desc optee_desc = {

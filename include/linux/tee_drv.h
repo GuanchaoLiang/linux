@@ -51,6 +51,7 @@ struct tee_shm_pool;
 struct tee_context {
 	struct tee_device *teedev;
 	struct list_head list_shm;
+    struct tee_agent agent;
 	void *data;
 	struct kref refcount;
 	bool releasing;
@@ -110,6 +111,12 @@ struct tee_driver_ops {
 	int (*shm_register)(struct tee_context *ctx, struct tee_shm *shm,
 			    struct page **pages, size_t num_pages);
 	int (*shm_unregister)(struct tee_context *ctx, struct tee_shm *shm);
+	int (*agent_register)(struct tee_context *ctx, u32 agent_id);
+	int (*agent_unregister)(struct tee_context *ctx, u32 agent_id);
+	int (*agent_recv)(struct tee_context *ctx, u32 agent_id,
+			  struct tee_ioctl_buf_data *ubuf);
+	int (*agent_send)(struct tee_context *ctx, u32 agent_id,
+			  struct tee_ioctl_buf_data *ubuf);
 };
 
 /**
@@ -126,6 +133,30 @@ struct tee_desc {
 	struct module *owner;
 	u32 flags;
 };
+
+/**
+ * struct tee_agent_kernel_ops - Describes the REE kernel agent
+ * @agent name:		name of the agent, can't be null
+ * @agent_id:		identifier of the agent, must be unique in system
+ * @agent_data:		private pointer which is passback by the agent callback
+ * @mutex:		protect the callback from reentrant, initialize by owner
+ * @avail:		protect the TEE agent call from the agent_unregister
+ * @tee_agent_run:	callback function of the Agent
+ */
+struct tee_agent_kernel_ops {
+        const char *agent_name;
+        unsigned int agent_id;
+        void *agent_data;
+        struct mutex mutex;
+        bool avail;
+        int (*tee_agent_run)(void *, void *, unsigned int);
+};
+
+struct tee_agent {
+    struct mutex mutex;
+    struct tee_agent_kernel_ops *tee_agent_ops[MAX_AGENT_NUM];
+};
+
 
 /**
  * tee_device_alloc() - Allocate a new struct tee_device instance
@@ -547,5 +578,10 @@ int tee_client_close_session(struct tee_context *ctx, u32 session);
 int tee_client_invoke_func(struct tee_context *ctx,
 			   struct tee_ioctl_invoke_arg *arg,
 			   struct tee_param *param);
+
+int tee_agent_kernel_register(struct tee_agent_kernel_ops *tee_ops);
+
+int tee_agent_kernel_unregister(struct tee_agent_kernel_ops *tee_ops);
+
 
 #endif /*__TEE_DRV_H*/

@@ -442,6 +442,11 @@ struct optee_msg_arg {
 #define OPTEE_MSG_RPC_CMD_SHM_FREE	7
 
 /*
+ * user defined Agentcall from TEE to REE
+ */
+#define OPTEE_MSG_RPC_CMD_AGENT	8
+
+/*
  * Register timestamp buffer
  *
  * [in] param[0].u.value.a	Subcommand (register buffer, unregister buffer)
